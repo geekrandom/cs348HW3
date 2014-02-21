@@ -33,8 +33,76 @@ void renderMesh() {
 	glDepthRange(0.001,1);
 	glEnable(GL_NORMALIZE);
 	
-	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH ---------------------------------------------------------
-	
+	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH
+	// ---------------------------------------------------------
+
+
+
+
+        OpenMesh::Vec3f point[2];
+        OpenMesh::Vec3f normals[2];
+        OpenMesh::Vec3f faceNorm[2];
+        
+
+      for(Mesh::FaceIter it = mesh.faces_begin(); it !=
+                    mesh.faces_end(); ++it) {
+
+        faceNorm[0] =mesh.normal(it.handle());
+        
+            Mesh::ConstFaceVertexIter cfv_it;
+            cfv_it =mesh.cfv_iter(it.handle());
+            point[0] =mesh.point(cfv_it.handle());
+            normals[0] =mesh.normal(cfv_it.handle());
+            point[1] =mesh.point((++cfv_it).handle());
+            normals[1] =mesh.point(cfv_it.handle());
+            point[2] =mesh.point((++cfv_it).handle());
+            normals[2] =mesh.point(cfv_it.handle());
+            
+            glBegin(GL_TRIANGLES);
+            
+            glNormal3f(faceNorm[0][0], faceNorm[0][1], faceNorm[0][2]);
+            //glNormal3f(normals[0][0], normals[0][1], normals[0][2]);
+            glVertex3f(point[0][0], point[0][1], point[0][2]);
+            //glNormal3f(normals[1][0], normals[1][1], normals[1][2]);
+            glVertex3f(point[1][0], point[1][1], point[1][2]);
+            //glNormal3f(normals[2][0], normals[2][1], normals[2][2]);
+            glVertex3f(point[2][0], point[2][1], point[2][2]);
+
+            glEnd();
+
+        }
+
+
+
+/*
+
+        std::vector<unsigned int> indices;
+          indices.clear();
+          indices.reserve(mesh.n_faces()*3);
+
+      for(Mesh::FaceIter f_it = mesh.faces_begin(); f_it !=
+                    mesh.faces_end(); ++f_it) {
+          
+            Mesh::ConstFaceVertexIter cfv_it;
+            cfv_it =mesh.cfv_iter(f_it.handle());
+
+            indices.push_back(cfv_it.handle().idx());
+            indices.push_back((++cfv_it).handle().idx());
+            indices.push_back((++cfv_it).handle().idx());
+      }   
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glVertexPointer(mesh.points());
+        glNormalPointer(mesh.vertex_normals());
+
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
+        &indices[0]);
+        
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
+            
+*/
 	// -------------------------------------------------------------------------------------------------------------
 	
 	if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -44,6 +112,8 @@ void renderMesh() {
 	
 	if (showCurvature) {
 		// WRITE CODE HERE TO RENDER THE PRINCIPAL DIRECTIONS YOU COMPUTED ---------------------------------------------
+
+
 
 		// -------------------------------------------------------------------------------------------------------------
 	}
