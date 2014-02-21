@@ -36,7 +36,7 @@ void renderMesh() {
 	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH
 	// ---------------------------------------------------------
 
-
+/*
 
 
         OpenMesh::Vec3f point[2];
@@ -72,9 +72,9 @@ void renderMesh() {
 
         }
 
+*/
 
 
-/*
 
         std::vector<unsigned int> indices;
           indices.clear();
@@ -93,8 +93,8 @@ void renderMesh() {
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_NORMAL_ARRAY);
-        glVertexPointer(mesh.points());
-        glNormalPointer(mesh.vertex_normals());
+        glVertexPointer(3, GL_FLOAT, 0, mesh.points());
+        glNormalPointer(GL_FLOAT, 0, mesh.vertex_normals());
 
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT,
         &indices[0]);
@@ -102,7 +102,7 @@ void renderMesh() {
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_NORMAL_ARRAY);
             
-*/
+
 	// -------------------------------------------------------------------------------------------------------------
 	
 	if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
