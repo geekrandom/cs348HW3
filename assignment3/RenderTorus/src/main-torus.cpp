@@ -1,13 +1,17 @@
+
 #include <stdlib.h>
 #include <GL/glut.h>
 #include <OpenMesh/Core/IO/Options.hh>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <iostream>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <Eigen/Core>
+
 typedef OpenMesh::TriMesh_ArrayKernelT<OpenMesh::DefaultTraits>  Mesh;
 
 using namespace std;
 using namespace OpenMesh;
+using namespace Eigen;
 
 // You don't have to modify any of these variables
 Mesh* mesh = NULL;
@@ -21,14 +25,6 @@ float shininess[] = { 50.0 };
 
 #define R 5 // major radius of torus
 #define r 2 // minor radius of torus
-
-// a structure to hold a point in homogenous coordinates
-struct Point {
-	float x;
-	float y;
-	float z;
-    float w;
-};
 
 // enumerated type used to refer to the particular torus quadrant
 // we're constructing
@@ -44,86 +40,7 @@ enum torusQuadrant {
 
 /// 3x3 grid of control points that will define the surface patch
 // we have 4 of these grids, one for each quarter of the torus
-Point Points[4][3][3] = {
-    
-//Positive y and positive z quarter of torus
-    {
-        {
-            {r+R,0,0,1},
-            {0,r+R,0,1},
-            {-R-r,0,0,1}
-        },
-        {
-            {0,0,r,0},
-            {0,0,0,0},
-            {0,0,r,0}
-        },
-        {
-            {R-r,0,0,1},
-            {0,R-r,0,0},
-            {1,r-R,0,0}
-        }
-    },
-
-// Positive y and negative z quarter of torus
-    {
-        {
-            {r+R,0,0,1},
-            {0,r+R,0,1},
-            {-R-r,0,0,1}
-        },
-        {
-            {0,0,r,0},
-            {0,0,0,0},
-            {0,0,r,0}
-        },
-        {
-            {R-r,0,0,1},
-            {0,R-r,0,0},
-            {1,r-R,0,0}
-        }
-    },
-
-
-// Negative y and positive z quarter of torus
-{
-        {
-            {r+R,0,0,1},
-            {0,r+R,0,1},
-            {-R-r,0,0,1}
-        },
-        {
-            {0,0,r,0},
-            {0,0,0,0},
-            {0,0,r,0}
-        },
-        {
-            {R-r,0,0,1},
-            {0,R-r,0,0},
-            {1,r-R,0,0}
-        }
-    },
-
-
-// Negative y and negative z quarter of torus
-    {
-        {
-            {r+R,0,0,1},
-            {0,r+R,0,1},
-            {-R-r,0,0,1}
-        },
-        {
-            {0,0,r,0},
-            {0,0,0,0},
-            {0,0,r,0}
-        },
-        {
-            {R-r,0,0,1},
-            {0,R-r,0,0},
-            {1,r-R,0,0}
-        }
-    }
-};
+Vector4d Points[4][3][3];
 // ---------------------------------------------------------------------------------------------------------
 
 
@@ -131,6 +48,108 @@ Point Points[4][3][3] = {
 // surface patch is constructed as an LOD x LOD grid of vertices.
 // minimum level of depth is 3.
 unsigned int LOD = 30;
+
+void generateControlPoints(){
+    int variable[4][3][3][8] = {
+    //postive postive
+    {
+        {
+            {1,0,1,0,1,0,1,0},
+            {1,0,1,0,1,0,0,1},
+            {1,0,1,0,0,1,0,1}
+        },
+        {
+            {1,0,0,1,1,0,1,0},
+            {1,0,0,1,1,0,0,1},
+            {1,0,0,1,0,1,0,1}
+        },
+        {
+            {0,1,0,1,1,0,1,0},
+            {0,1,0,1,1,0,0,1},
+            {0,1,0,1,0,1,0,1}
+        }
+    },
+    //positive negative
+    {
+        {
+            {1,0,1,0,1,0,1,0},
+            {1,0,1,0,1,0,0,-1},
+            {1,0,1,0,0,-1,0,-1}
+        },
+        {
+            {1,0,0,1,1,0,1,0},
+            {1,0,0,1,1,0,0,-1},
+            {1,0,0,1,0,-1,0,-1}
+        },
+        {
+            {0,1,0,1,1,0,1,0},
+            {0,1,0,1,1,0,0,-1},
+            {0,1,0,1,0,-1,0,-1}
+        }
+    },
+    // negative positive
+    {
+        {
+            {1,0,1,0,1,0,1,0},
+            {1,0,1,0,1,0,0,1},
+            {1,0,1,0,0,1,0,1}
+        },
+        {
+            {1,0,0,-1,1,0,1,0},
+            {1,0,0,-1,1,0,0,1},
+            {1,0,0,-1,0,1,0,1}
+        },
+        {
+            {0,-1,0,-1,1,0,1,0},
+            {0,-1,0,-1,1,0,0,1},
+            {0,-1,0,-1,0,1,0,1}
+        }
+    },
+    //negative negative
+    {
+        {
+            {1,0,1,0,1,0,1,0},
+            {1,0,1,0,1,0,0,-1},
+            {1,0,1,0,0,-1,0,-1}
+        },
+        {
+            {1,0,0,-1,1,0,1,0},
+            {1,0,0,-1,1,0,0,-1},
+            {1,0,0,-1,0,-1,0,-1}
+        },
+        {
+            {0,-1,0,-1,1,0,1,0},
+            {0,-1,0,-1,1,0,0,-1},
+            {0,-1,0,-1,0,-1,0,-1}
+        }
+    }
+
+    };
+    for(int k = 0; k < 4; k++){
+        cout <<"\n";
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                int pOne = variable[k][i][j][0];
+                int qOne = variable[k][i][j][1];
+                int pTwo = variable[k][i][j][2];
+                int qTwo = variable[k][i][j][3];
+                int sOne = variable[k][i][j][4];
+                int tOne = variable[k][i][j][5];
+                int sTwo = variable[k][i][j][6];
+                int tTwo = variable[k][i][j][7];
+
+                float w = (pOne*pTwo + qOne*qTwo)*(sOne*sTwo+tOne*tTwo);
+                float x = R *(sOne*sTwo - tOne*tTwo)*(pOne*pTwo + qOne*qTwo) + r*(pOne*pTwo-qOne*qTwo)*(sOne*sTwo - tOne*tTwo);
+                float y = R *(tOne*sTwo + sOne*tTwo)*(pOne*pTwo + qOne*qTwo) + r*(pOne*pTwo-qOne*qTwo)*(tOne*sTwo + sOne*tTwo);
+                float z = r*(qOne*pTwo+qTwo*pOne)*(sOne*sTwo + tOne*tTwo);
+                cout << "k: " << k << " i: "<< i <<" j: "<<j<<"  Point("<<x<<", "<<y<<", "<<z<<", "<<w<<");\n";
+                Points[k][i][j] = Vector4d(x,y,z,w);
+            }
+        }
+    }
+}
+
+
 
 /*
  * Inputs:
@@ -142,30 +161,29 @@ unsigned int LOD = 30;
  * functions for each interpolation) in order to evaluate the coordinates of the 
  * corresponding point on the surface of the torus.
  */
-Point Calculate(float u, float v, int idx) {
-    Point surfacePoint;
-    surfacePoint.x = surfacePoint.y = surfacePoint.z = 0;
-    surfacePoint.w = 1;
-    
+Vector4d Calculate(float u, float v, int idx) {  
+    int k = idx; 
     // STUDENT CODE SECTION 2
-    // WRITE CODE HERE TO EVALUATE THE VERTEX POSITION OF A POINT ON THE SURFACE ------------------------------
-    if(idx == 1){
-        v = -v;
-    }else if(idx == 2){
-        u = -u;
-    }else if(idx == 3){
-        u = -u;
-        v = -v;
-    }
+    // WRITE CODE HERE TO EVALUATE THE VERTEX POSITION OF A POINT ON THE SURFACE 
+    // ------------------------------
+    Vector4d a = v*Points[k][0][0]+(1-v)*Points[k][1][0];
+    Vector4d b = v*Points[k][1][0]+(1-v)*Points[k][2][0];
+    Vector4d c = v*Points[k][0][1]+(1-v)*Points[k][1][1];
+    Vector4d d = v*Points[k][1][1]+(1-v)*Points[k][2][1];
+    Vector4d e = v*Points[k][0][2]+(1-v)*Points[k][1][2];
+    Vector4d f = v*Points[k][1][2]+(1-v)*Points[k][2][2];
 
-    surfacePoint.w = (1+u*u)*(1+v*v);
-    surfacePoint.x = R*(1-v*v)*(1+u*u)+r*(1-u*u)*(1-v*v);
-    surfacePoint.y = 2*v*R*(1+u*u)+2*v*r*(1-u*u);
-    surfacePoint.z = 2*u*r*(1+v*v);
+    Vector4d x = v*a + (1-v)*b;
+    Vector4d y = v*c + (1-v)*d;
+    Vector4d z = v*e + (1-v)*f;
+
+    Vector4d m = u*x + (1-u)*y;
+    Vector4d n = u*y + (1-u)*z;
+
+    Vector4d final = u*m + (1-u)*n;
+    //---------------------------------------------------------------------------------------------------------
     
-    // ---------------------------------------------------------------------------------------------------------
-    
-    return surfacePoint;
+    return final;
 }
 
 /*
@@ -191,6 +209,7 @@ Point Calculate(float u, float v, int idx) {
  * you list your vertices.
  */
 Mesh* generateMesh() {
+    generateControlPoints();
     // have a minimum level of depth
     if (LOD<3)
         LOD=3;
@@ -220,11 +239,11 @@ Mesh* generateMesh() {
             for(int k = posYposZ; k <= negYnegZ; ++k) {
                 // NEED TO FILL IN DEFINITION OF Calculate(float u,float v,int idx) -----------------------
                 // calculate the point on the surface
-                Point p = Calculate(u,v,k);
+                Vector4d p = Calculate(u,v,k);
                 // ----------------------------------------------------------------------------------------
                 
                 // stores point in the appropriate 2D array of vertex handles
-                vhandle[k][i][j] = mesh->add_vertex(Mesh::Point(p.x/p.w,p.y/p.w,p.z/p.w));
+                vhandle[k][i][j] = mesh->add_vertex(Mesh::Point(p[0]/p[3],p[1]/p[3],p[2]/p[3]));
             }
         }
     }

@@ -36,8 +36,8 @@ void renderMesh() {
 	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH
 	// ---------------------------------------------------------
 
-/*
 
+/*
 
         OpenMesh::Vec3f point[2];
         OpenMesh::Vec3f normals[2];
@@ -71,8 +71,8 @@ void renderMesh() {
             glEnd();
 
         }
-
 */
+
 
 
 
