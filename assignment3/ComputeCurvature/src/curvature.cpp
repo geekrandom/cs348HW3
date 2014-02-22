@@ -12,14 +12,15 @@ void FindKTFromMatrix(Matrix3d m, CurvatureInfo *info) {
         solver.compute(m, true);
 
         Vector3d e1, e2, e3;
-        e1 = solver.eigenvectors().col(1);
-        e2 = solver.eigenvectors().col(2);
-        e3 = solver.eigenvectors().col(3);
+        e1 = solver.pseudoEigenvectors().block(0,0,3,1);
+        e2 = solver.pseudoEigenvectors().block(0,0,3,2);
+        e3 = solver.pseudoEigenvectors().block(0,0,3,3);
 
-        MatrixType::Scalar v1, v2, v3;
-        v1 = solver.eigenvalues()(0);
-        v2 = solver.eigenvalues()(1);
-        v3 = solver.eigenvalues()(2);
+        double v1, v2, v3;
+        v1 = real(solver.eigenvalues()(0));
+        v2 = real(solver.eigenvalues()(1));
+        v3 = real(solver.eigenvalues()(2));
+
 
 //T1, T2, k1, k2 corresponding to algorithm in paper
         Vector3d T1, T2;
@@ -45,14 +46,11 @@ void FindKTFromMatrix(Matrix3d m, CurvatureInfo *info) {
             k2 = v2;
         }
         
-
 		// In the end you need to fill in this struct
-		
-
 		info->curvatures[0] = k1;
 		info->curvatures[1] = k2;
 		info->directions[0] = Vec3f(T1[0], T1[1], T1[2]);
-		info->directions[1] = Vec3f(T2[0], T2[1], T2[2]);    
+		info->directions[1] = Vec3f(T2[0], T2[1], T2[2]);   
 }
 
 
@@ -77,24 +75,29 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
         Matrix3d m = Matrix3d::Zero();
     
-        Mesh::VertexOHalfedgeIter he_iter;
-        he_iter = mesh.voh_iter(it.handle());
+        // circulate around the current vertex
+        Mesh::VertexOHalfedgeIter he_iter = mesh.voh_iter(it.handle());
 
-        while(he_iter) {
-            Vec3f meshVj = mesh.point(he_iter.value_type());
+        for(; he_iter; ++he_iter) {
+	        // do something with e.g. mesh.point(*vv_it)
+            OpenMesh::HalfedgeHandle heHandle = he_iter.current_halfedge_handle();
+            Vec3f meshVj = mesh.point(mesh.to_vertex_handle(heHandle));
             Vector3d vj(meshVj[0], meshVj[1], meshVj[2]); 
 
             Vector3d Tij = (Matrix3d::Identity(3, 3) - N * N.transpose()) * (vi - vj);
             Tij.normalize();
 
             Vector3d vjminvi = vj - vi;
-            Matrix3d Kij = 2 * N.transpose * (vj - vi)/(vjminvi.norm() * vjminvi.norm());
-            double A1 = mesh.calc_sector_area(he_iter.handle());
-            double A2 = mesh.calc_sector_area(he_iter.handle().flip());
+            double constant = 2.0/(vjminvi.norm() * vjminvi.norm());
+            double Kij = constant * N.dot(vj - vi);
+            double A1 = mesh.calc_sector_area(heHandle);
+            double A2 = mesh.calc_sector_area(mesh.opposite_halfedge_handle(heHandle));
 
             double Wij = (A1 + A2) / TotalArea;
 
-            m += Wij * Kij * Tij * Tij.transpose();
+            m.col(1) += Wij * Kij * Tij[0] * Tij;
+            m.col(2) += Wij * Kij * Tij[1] * Tij;
+            m.col(3) += Wij * Kij * Tij[2] * Tij;
         }
 
 		CurvatureInfo info;
