@@ -126,7 +126,6 @@ void generateControlPoints(){
 
     };
     for(int k = 0; k < 4; k++){
-        cout <<"\n";
         for(int i = 0; i < 3; i++){
             for(int j = 0; j < 3; j++){
                 int pOne = variable[k][i][j][0];
@@ -142,7 +141,6 @@ void generateControlPoints(){
                 float x = R *(sOne*sTwo - tOne*tTwo)*(pOne*pTwo + qOne*qTwo) + r*(pOne*pTwo-qOne*qTwo)*(sOne*sTwo - tOne*tTwo);
                 float y = R *(tOne*sTwo + sOne*tTwo)*(pOne*pTwo + qOne*qTwo) + r*(pOne*pTwo-qOne*qTwo)*(tOne*sTwo + sOne*tTwo);
                 float z = r*(qOne*pTwo+qTwo*pOne)*(sOne*sTwo + tOne*tTwo);
-                cout << "k: " << k << " i: "<< i <<" j: "<<j<<"  Point("<<x<<", "<<y<<", "<<z<<", "<<w<<");\n";
                 Points[k][i][j] = Vector4d(x,y,z,w);
             }
         }
@@ -166,6 +164,7 @@ Vector4d Calculate(float u, float v, int idx) {
     // STUDENT CODE SECTION 2
     // WRITE CODE HERE TO EVALUATE THE VERTEX POSITION OF A POINT ON THE SURFACE 
     // ------------------------------
+    // First Vertical interpolation in the v direction
     Vector4d a = v*Points[k][0][0]+(1-v)*Points[k][1][0];
     Vector4d b = v*Points[k][1][0]+(1-v)*Points[k][2][0];
     Vector4d c = v*Points[k][0][1]+(1-v)*Points[k][1][1];
@@ -173,13 +172,16 @@ Vector4d Calculate(float u, float v, int idx) {
     Vector4d e = v*Points[k][0][2]+(1-v)*Points[k][1][2];
     Vector4d f = v*Points[k][1][2]+(1-v)*Points[k][2][2];
 
+    // Second Vertical interpolation in the v direction
     Vector4d x = v*a + (1-v)*b;
     Vector4d y = v*c + (1-v)*d;
     Vector4d z = v*e + (1-v)*f;
 
+    // First Horizontal interpolation in the u direction
     Vector4d m = u*x + (1-u)*y;
     Vector4d n = u*y + (1-u)*z;
 
+    // Second Horizontal interpolation in the u direction    
     Vector4d final = u*m + (1-u)*n;
     //---------------------------------------------------------------------------------------------------------
     
@@ -257,12 +259,25 @@ Mesh* generateMesh() {
                 // STUDENT CODE SECTION 3
                 // NEED TO ADD FACES TO THE MESH USING YOUR VERTEX HANDLES
                 // DEFINED IN vhandle -------------
-                face_vhandles.clear();
-                face_vhandles.push_back(vhandle[k][i][j]);
-                face_vhandles.push_back(vhandle[k][i][j+1]);
-                face_vhandles.push_back(vhandle[k][i+1][j+1]);
-                face_vhandles.push_back(vhandle[k][i+1][j]);
-                mesh->add_face(face_vhandles);
+                
+//regions that load correctly in standard counterclock-wise vertex orientation
+                if(k==1 || k==2) {
+                    face_vhandles.clear();
+                    face_vhandles.push_back(vhandle[k][i][j]);
+                    face_vhandles.push_back(vhandle[k][i][j+1]);
+                    face_vhandles.push_back(vhandle[k][i+1][j+1]);
+                    face_vhandles.push_back(vhandle[k][i+1][j]);
+                    mesh->add_face(face_vhandles);
+                } 
+			//changes orintation so that the normals face out for rendering with lighting
+			else {
+                    face_vhandles.clear();
+                    face_vhandles.push_back(vhandle[k][i+1][j]);
+                    face_vhandles.push_back(vhandle[k][i+1][j+1]);
+                    face_vhandles.push_back(vhandle[k][i][j+1]);
+                    face_vhandles.push_back(vhandle[k][i][j]);
+                    mesh->add_face(face_vhandles);
+                }
                 // ----------------------------------------------------------------------------------------
                 
             }

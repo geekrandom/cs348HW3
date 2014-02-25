@@ -1,3 +1,52 @@
+----------------------------------
+Description of the Assignment
+----------------------------------
+
+The people who worked on this are: 
+	Nora Coler and Alexandra Tamplin. 
+
+We filled in all required code sections as described in the instructions.
+-----------------------------------------------------------
+-----------------------------------------------------------
+Render Torus:
+	in main-torus.cpp
+
+	Student Code Section 1: We have programmed the control points to be filled in by the function generateControlPoints. Each quadrant is designed to be from 0-1 or -1-0 (representing 0-infinity or -infinity-0). The actual points are then generated using the defined region and set mix of inifity and zero that we found by hand and the calculations found in HW3-#1. The Points structure is fuilled in with these calculated points.
+
+
+	Student Code Section 2: Interpolation between the control points is performed. [a-f] is the first step of interpolation in the v direction. [x-z] is the second step. Using the second step, we find [m-n] as the first step in the u direction. The final point is found using m and n for the second interpolation in the u direction. That final point is returned.
+
+	Student Code Section 3: The faces are inserted into the mesh using face_vhandles. The faces are inputted in a counterclock-wise pattern to maintain continuity in the region.
+
+	Faces are loaded so that the vertices are oriented in a counterclock wise fashion over the entire face. Two of the regions needed to be loaded in in reverse order to achieve this (as marked in code). The torus displays correctly in the Compute Curvature executable.
+
+
+	<----- The rest of the code remains intact as it was given in the starter code. ----->
+
+	
+-----------------------------------------------------------
+-----------------------------------------------------------
+
+Compute Curvature:
+	in curvature.cpp
+	
+	Student Code Section : Utilizing the algorithm in the Taubin paper. For each vertex in the mesh: The area of the surrounding faces is calcutlated and added to the matrix m. After the matrix is built, the function <FindKTFromMatrix> is called to calculate the eigen values and eigen vectors from the matrix. We only collect the two vectors with non zero eigenvectors (to avoid collecting the normal vector) and place these into the CurvatureInfo.
+
+	in main-curvature.cpp
+
+	showCurvature and showNormals have been set to true. The normal is green and the two curvature vectors are a blue and red cross at the vertex.
+
+	Student Code Section: Rendering: The faces are loaded into a vector. The vertices and normals are loaded into a GL array and reference the mesh data. Then glDrawElements is called to draw the triangles of the mesh.
+
+	Student Code Section: Principal Directions: Following the logic of showing the normals, the curvatures are drawn as a line centered over the vertex. The directions (T1 and T2) are drawn separately in blue and red for every vertex.
+
+<----- The rest of the code remains intact as it was given in the starter code. ----->
+
+
+--------------------------------
+Instructions for the assignment:
+--------------------------------
+
 CS 348a Homework 3:
 -------------------
 
@@ -20,3 +69,6 @@ This code is designed to compile on the Myth machines.  To do so, simply type "m
 at the command line, where models/horse.off is the model you wish to use.
 
 The easiest way to get started is to write your code on a Myth machine, either in person or via SSH with X forwarding.  If you prefer to work on your personal machine, you will need to modify makefile.in to point to the proper libraries.  The CAs can help you get started.  However, we recommend that you have experience compiling and linking programs locally if you decide on the second option, as it may eat up valuable time.
+
+
+--------------------------------------------------------

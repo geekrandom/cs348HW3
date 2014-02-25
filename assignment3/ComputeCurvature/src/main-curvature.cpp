@@ -19,7 +19,7 @@ int lastPos[2];
 float cameraPos[4] = {0,0,4,1};
 Vec3f up, pan;
 int windowWidth = 640, windowHeight = 480;
-bool showSurface = true, showAxes = true, showCurvature = false, showNormals = false;
+bool showSurface = true, showAxes = true, showCurvature = true, showNormals = true;
 
 float specular[] = { 1.0, 1.0, 1.0, 1.0 };
 float shininess[] = { 50.0 };
@@ -34,47 +34,7 @@ void renderMesh() {
 	glEnable(GL_NORMALIZE);
 	
 	// WRITE CODE HERE TO RENDER THE TRIANGLES OF THE MESH
-	// ---------------------------------------------------------
-
-
-/*
-
-        OpenMesh::Vec3f point[2];
-        OpenMesh::Vec3f normals[2];
-        OpenMesh::Vec3f faceNorm[2];
-        
-
-      for(Mesh::FaceIter it = mesh.faces_begin(); it !=
-                    mesh.faces_end(); ++it) {
-
-        faceNorm[0] =mesh.normal(it.handle());
-        
-            Mesh::ConstFaceVertexIter cfv_it;
-            cfv_it =mesh.cfv_iter(it.handle());
-            point[0] =mesh.point(cfv_it.handle());
-            normals[0] =mesh.normal(cfv_it.handle());
-            point[1] =mesh.point((++cfv_it).handle());
-            normals[1] =mesh.point(cfv_it.handle());
-            point[2] =mesh.point((++cfv_it).handle());
-            normals[2] =mesh.point(cfv_it.handle());
-            
-            glBegin(GL_TRIANGLES);
-            
-            glNormal3f(faceNorm[0][0], faceNorm[0][1], faceNorm[0][2]);
-            //glNormal3f(normals[0][0], normals[0][1], normals[0][2]);
-            glVertex3f(point[0][0], point[0][1], point[0][2]);
-            //glNormal3f(normals[1][0], normals[1][1], normals[1][2]);
-            glVertex3f(point[1][0], point[1][1], point[1][2]);
-            //glNormal3f(normals[2][0], normals[2][1], normals[2][2]);
-            glVertex3f(point[2][0], point[2][1], point[2][2]);
-
-            glEnd();
-
-        }
-*/
-
-
-
+	// --------------------------------------------------------
 
         std::vector<unsigned int> indices;
           indices.clear();
@@ -103,7 +63,7 @@ void renderMesh() {
         glDisableClientState(GL_NORMAL_ARRAY);
             
 
-	// -------------------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------
 	
 	if (!showSurface) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 	
@@ -111,11 +71,26 @@ void renderMesh() {
 	glDepthRange(0,0.999);
 	
 	if (showCurvature) {
-		// WRITE CODE HERE TO RENDER THE PRINCIPAL DIRECTIONS YOU COMPUTED ---------------------------------------------
+		// WRITE CODE HERE TO RENDER THE PRINCIPAL DIRECTIONS YOU COMPUTED
+        // ---------------------------------------------
+		glBegin(GL_LINES);
+		for (Mesh::ConstVertexIter it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
+			Vec3f p = mesh.point(it.handle());
+			CurvatureInfo info = mesh.property(curvature, it.handle());
 
-
-
-		// -------------------------------------------------------------------------------------------------------------
+            Vec3f Tone = p + info.directions[0]*.01;
+            Vec3f Ttwo = p + info.directions[1]*.01;
+            Vec3f Pone = p - info.directions[0]*.01;
+            Vec3f Ptwo = p - info.directions[1]*.01;
+    		glColor3f(1,0,0);
+			glVertex3f(Pone[0],Pone[1],Pone[2]);
+			glVertex3f(Tone[0],Tone[1],Tone[2]);
+    		glColor3f(0,0,1);
+			glVertex3f(Ptwo[0],Ptwo[1],Ptwo[2]);
+			glVertex3f(Ttwo[0],Ttwo[1],Ttwo[2]);
+		}
+		glEnd();
+		// ------------------------------------------------------
 	}
 	
 	if (showNormals) {

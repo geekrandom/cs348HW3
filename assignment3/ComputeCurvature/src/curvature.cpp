@@ -6,28 +6,30 @@ using namespace Eigen;
 
 #define esp 0.0001
 
+
+//Find the K values and T values from the eigenvectors from the matrix
 void FindKTFromMatrix(Matrix3d m, CurvatureInfo *info) {
 
         EigenSolver<Matrix3d> solver;
         solver.compute(m, true);
-
+        
         Vector3d e1, e2, e3;
         e1 = solver.pseudoEigenvectors().block(0,0,3,1);
-        e2 = solver.pseudoEigenvectors().block(0,0,3,2);
-        e3 = solver.pseudoEigenvectors().block(0,0,3,3);
-
+        e2 = solver.pseudoEigenvectors().block(0,1,3,1);
+        e3 = solver.pseudoEigenvectors().block(0,2,3,1);
+        
         double v1, v2, v3;
         v1 = real(solver.eigenvalues()(0));
         v2 = real(solver.eigenvalues()(1));
         v3 = real(solver.eigenvalues()(2));
 
-
-//T1, T2, k1, k2 corresponding to algorithm in paper
+        
+        //T1, T2, k1, k2 corresponding to algorithm in paper
         Vector3d T1, T2;
         double k1, k2;
 
-//find the eigen value == 0
-//thus removing the normal vector
+        //find the eigen value == 0
+        //thus removing the normal vector
         if(v1 < esp && v1 > -esp) {
             T1 = e2;
             T2 = e3;
@@ -50,16 +52,20 @@ void FindKTFromMatrix(Matrix3d m, CurvatureInfo *info) {
 		info->curvatures[0] = k1;
 		info->curvatures[1] = k2;
 		info->directions[0] = Vec3f(T1[0], T1[1], T1[2]);
-		info->directions[1] = Vec3f(T2[0], T2[1], T2[2]);   
+		info->directions[1] = Vec3f(T2[0], T2[1], T2[2]); 
+          
 }
 
 
 void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvature) {
-
+    
 	for (Mesh::VertexIter it = mesh.vertices_begin(); it != mesh.vertices_end(); ++it) {
-		// WRITE CODE HERE TO COMPUTE THE CURVATURE AT THE CURRENT VERTEX ----------------------------------------------
+		// WRITE CODE HERE TO COMPUTE THE CURVATURE AT THE CURRENT VERTEX
+        // ----------------------------------------------
+        
 		Vec3f normal = mesh.normal(it.handle());
-		Vector3d N(normal[0],normal[1],normal[2]); // example of converting to Eigen's vector class for easier math
+		Vector3d N(normal[0],normal[1],normal[2]); 
+        // example of converting to Eigen's vector class for easier math
 
         Vec3f meshVi = mesh.point(it.handle());
         Vector3d vi(meshVi[0], meshVi[1], meshVi[2]);
@@ -69,7 +75,7 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
         Mesh::VertexOHalfedgeIter area_iter;
         area_iter = mesh.voh_iter(it.handle());
 
-        while(area_iter) {
+        for(; area_iter; ++area_iter) {
             TotalArea += mesh.calc_sector_area(area_iter.handle());
         }
 
@@ -78,8 +84,8 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
         // circulate around the current vertex
         Mesh::VertexOHalfedgeIter he_iter = mesh.voh_iter(it.handle());
 
+        //Iterate over all the surrounding vertices and calculate their contribution to M
         for(; he_iter; ++he_iter) {
-	        // do something with e.g. mesh.point(*vv_it)
             OpenMesh::HalfedgeHandle heHandle = he_iter.current_halfedge_handle();
             Vec3f meshVj = mesh.point(mesh.to_vertex_handle(heHandle));
             Vector3d vj(meshVj[0], meshVj[1], meshVj[2]); 
@@ -95,16 +101,23 @@ void computeCurvature(Mesh &mesh, OpenMesh::VPropHandleT<CurvatureInfo> &curvatu
 
             double Wij = (A1 + A2) / TotalArea;
 
-            m.col(1) += Wij * Kij * Tij[0] * Tij;
-            m.col(2) += Wij * Kij * Tij[1] * Tij;
-            m.col(3) += Wij * Kij * Tij[2] * Tij;
-        }
+            m(0,0) += Wij * Kij * Tij[0] * Tij[0];
+            m(1,0) += Wij * Kij * Tij[0] * Tij[1];
+            m(2,0) += Wij * Kij * Tij[0] * Tij[2];
+            m(0,1) += Wij * Kij * Tij[1] * Tij[0];
+            m(1,1) += Wij * Kij * Tij[1] * Tij[1];
+            m(2,1) += Wij * Kij * Tij[1] * Tij[2];
+            m(0,2) += Wij * Kij * Tij[2] * Tij[0];
+            m(1,2) += Wij * Kij * Tij[2] * Tij[1];
+            m(2,2) += Wij * Kij * Tij[2] * Tij[2];
 
+        }
+        
 		CurvatureInfo info;
         FindKTFromMatrix(m, &info);
 
 		mesh.property(curvature,it) = info;
-		// -------------------------------------------------------------------------------------------------------------
+		// ------------------------------------------------------------------
 	}
 }
 
